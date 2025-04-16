@@ -1,0 +1,46 @@
+/* Additional custom styles */
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+}
+
+#resultContainer .card {
+    transition: all 0.3s ease;
+}
+
+#fraudForm input:valid {
+    border-color: #198754;
+}
+
+#fraudForm input:invalid {
+    border-color: #dc3545;
+}
+
+.spinner-border {
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1.25rem;
+    }
+    .btn-lg {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+    h3 {
+        font-size: 1.25rem;
+    }
+}
+
+/* Animation for fraud alert */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+.fraud-alert {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}

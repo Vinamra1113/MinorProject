@@ -1,0 +1,3 @@
+# This is a placeholder for a real model pickle file
+# In a real implementation, this would be a trained scikit-learn model
+# For demo purposes, we'll create a simple model in app.py

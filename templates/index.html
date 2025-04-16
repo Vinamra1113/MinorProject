@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Fraud Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 2rem;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .form-control:focus {
+            border-color: #6610f2;
+            box-shadow: 0 0 0 0.25rem rgba(102,16,242,.25);
+        }
+        .btn-primary {
+            background-color: #6610f2;
+            border-color: #6610f2;
+        }
+        .fraud-alert {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220,53,69,0); }
+            100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0 text-center">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Fraud Detection System
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="fraudForm">
+                            <div class="mb-3">
+                                <label for="cardNumber" class="form-label">Card Number</label>
+                                <input type="text" class="form-control" id="cardNumber" 
+                                       placeholder="Enter card number" required
+                                       pattern="[0-9]{13,16}">
+                                <div class="invalid-feedback">
+                                    Please enter a valid 13-16 digit card number
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="amount" class="form-label">Amount (₹)</label>
+                                    <input type="number" class="form-control" id="amount" 
+                                           placeholder="0" step="1" min="0" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="location" class="form-label">Location</label>
+                                    <input type="text" class="form-control" id="location" 
+                                           placeholder="Country/City" required>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                                    <span id="submitText">Check Transaction</span>
+                                    <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div id="resultContainer" class="mt-4 d-none">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h4 id="resultTitle" class="card-title"></h4>
+                                    <p id="resultText" class="card-text"></p>
+                                    <div id="resultIcon"></div>
+                                    <p class="text-muted mt-3 small">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Risk: <span id="confidenceValue"></span>%
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('fraudForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const spinner = document.getElementById('spinner');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitText.textContent = 'Analyzing...';
+            spinner.classList.remove('d-none');
+            
+            // Get form data
+            const formData = {
+                card_number: document.getElementById('cardNumber').value,
+                amount: document.getElementById('amount').value,
+                location: document.getElementById('location').value
+            };
+            
+            try {
+                const response = await fetch('/check-fraud', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Display results
+                const resultContainer = document.getElementById('resultContainer');
+                const resultTitle = document.getElementById('resultTitle');
+                const resultText = document.getElementById('resultText');
+                const resultIcon = document.getElementById('resultIcon');
+                const confidenceValue = document.getElementById('confidenceValue');
+                
+                resultContainer.classList.remove('d-none');
+                
+                if (data.is_fraud) {
+                    resultContainer.querySelector('.card').classList.add('border-danger', 'fraud-alert');
+                    resultTitle.textContent = 'Potential Fraud Detected!';
+                    resultTitle.className = 'card-title text-danger';
+                    resultText.textContent = 'This transaction appears suspicious.';
+                    resultIcon.innerHTML = '<i class="fas fa-exclamation-triangle fa-4x text-danger"></i>';
+                } else {
+                    resultContainer.querySelector('.card').classList.add('border-success');
+                    resultTitle.textContent = 'Transaction Approved';
+                    resultTitle.className = 'card-title text-success';
+                    resultText.textContent = 'This transaction appears legitimate.';
+                    resultIcon.innerHTML = '<i class="fas fa-check-circle fa-4x text-success"></i>';
+                }
+                
+                confidenceValue.textContent = (data.confidence * 100).toFixed(1);
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                // Reset button state
+                submitBtn.disabled = false;
+                submitText.textContent = 'Check Transaction';
+                spinner.classList.add('d-none');
+            }
+        });
+        
+        // Form validation
+        document.getElementById('cardNumber').addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '');
+        });
+    </script>
+</body>
+</html>
